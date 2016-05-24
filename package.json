@@ -1,0 +1,11 @@
+{
+  "name": "Matt-Chat",
+  "version": "0.0.1",
+  "description": "Application to chat with Matt",
+  "dependencies": {
+    "express": "~4.13.4",
+    "colors": "~1.1.2",
+    "socket.io": "~1.4.6",
+    "fs": "0.0.2"
+  }
+}

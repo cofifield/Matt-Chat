@@ -1,0 +1,55 @@
+<!Doctype html>
+<html>
+  <head>
+    <title>Matt Chat</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="assets/style">
+  </head>
+  
+  <body>
+    <div class="fluid-container">
+      <div class="row">
+        <!-- Left -->
+        <div id="groups" class="col-md-4">
+        </div>
+
+        <!-- Right -->
+        <div id="chats" class="col-md-8">
+        </div>
+      </div>
+    </div>
+
+    <!-- Enter Name Modal -->
+    <div class="container">
+      <!-- Modal -->
+      <div class="modal fade" id="nameModal" role="dialog">
+        <div class="modal-dialog">
+          <!-- Modal content-->
+          <div class="modal-content">
+            <div class="modal-header">
+              <h4 class="modal-title">Welcome to Matt Chat!</h4>
+            </div>
+            <div class="modal-body">
+              <p>Please enter your name in the box below!</p>
+              <div class="row">
+                <div class="col-sm-9">
+                  <input type="text" onKeyPress="validateName(false)" placeholder="Enter your name" id="name" class="form-control">
+                </div>
+                <div class="col-sm-3">
+                  <button id="nameButton" type="button" class="btn btn-primary" data-dismiss="modal" onClick="validateName(true)">Let's Go!</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- End Name Modal -->
+
+  </body>
+</html>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="http://code.jquery.com/jquery-1.12.3.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+<script src="assets/client"></script>
