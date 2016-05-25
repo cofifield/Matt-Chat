@@ -14,14 +14,22 @@ var messageJSON = "";
 var groupsFile = './assets/json/groups.json';
 var groupsJSON = "";
 
+var usersFile = './assets/json/users.json';
+var usersJSON = "";
+
+fs.readFile(msgFile, 'utf8', function (err, data) {
+    if (err) throw err;
+    messageJSON = JSON.parse(data);
+});
+
 fs.readFile(groupsFile, 'utf8', function (err, data) {
     if (err) throw err;
     groupsJSON = JSON.parse(data);
 });
 
-fs.readFile(msgFile, 'utf8', function (err, data) {
+fs.readFile(usersFile, 'utf8', function (err, data) {
     if (err) throw err;
-    messageJSON = JSON.parse(data);
+    usersJSON = JSON.parse(data);
 });
 
 // Handle Get Requests
@@ -89,8 +97,8 @@ io.on('connection', function(socket){
 
 	    	// Write messages to JSON file
 	    	fs.writeFile(msgFile, JSON.stringify(messageJSON), function (err) {
-				if (err) return Log('ERROR', err);
-			});
+				  if (err) return Log('ERROR', err);
+			  });
 
         console.log(timeStamp);
         // Reload JSON
@@ -129,7 +137,37 @@ io.on('connection', function(socket){
     	Log('SERVER', '<' + user.green + '> loaded messages from the server')
   	});
 
+    // Handle User Info request
+    socket.on('requestUserInfo', function(user) {
+      reloadUsers();
 
+      var found = false;
+      var id = 0;
+      for(var x=0; x < usersJSON.users.length; x ++) {
+        if(usersJSON.users[x].name == user) {
+          usersJSON.users[x].online = '1';
+          id = x;
+          found = true;
+        }
+      }
+
+      // Create new user if they don't exist
+      if(!found) {
+        usersJSON.users.push({name:user, online:'1', img:'http://placehold.it/45X45'})
+      }
+
+      // Write to JSON file
+      fs.writeFile(usersFile, JSON.stringify(usersJSON), function (err) {
+          if (err) return Log('ERROR', err);
+      });
+
+      // Update User JSON
+      reloadUsers();
+
+      // Send user info back to client
+      socket.emit('requestUserInfo' , usersJSON.users[id].online, usersJSON.users[id].img);
+
+    });
 
   	// Handle incoming group requests
   	socket.on('loadGroups', function(user){
@@ -165,6 +203,13 @@ function reloadGroups() {
 	fs.readFile(groupsFile, 'utf8', function (err, data) {
       if (err) throw err;
     groupsJSON = JSON.parse(data);
+  });
+}
+
+function reloadUsers() {
+  fs.readFile(usersFile, 'utf8', function (err, data) {
+      if (err) throw err;
+    usersJSON = JSON.parse(data);
   });
 }
 

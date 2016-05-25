@@ -6,7 +6,6 @@ checkCookie();
 // Build Interface
 function buildInterface() {
 	if($('#name').val() != '') {
-		setCookie('name', $('#name').val(), '30');
 		loadGroups();
 		loadMessages();
 	} else {
@@ -125,6 +124,14 @@ socket.on('sendMessage', function(user, msg, group, time){
 	$('#chats-' + group).append('<small class="text-muted">' + user + ' | ' + time + '</small><hr>');
 });
 
+// Recieve User info
+socket.on('requestUserInfo', function(online, img){
+	setCookie('online', online, '30');
+	setCookie('usrImage', img, '30');
+	$('#cookie').html(getCookie('name') + ' ' + getCookie('online') + ' ' + getCookie('usrImage'));
+});
+
+// Check if enter is pressed while in the message text field
 function getChar(event, group) {
 	if(event.keyCode == 13)
 		sendMessage(group);
@@ -138,26 +145,31 @@ function sendMessage(group) {
 	}
 }
 
+// Open chat box
 function openChat(group) {
 	$('#chatBox-' + group).css('display','');
 }
 
+// Close chat box
 function closeChat(group) {
 	$('#chatBox-' + group).css('display','none');
 }
 
+// Prevent user from having a blank name.
 function validateName(clicked) {
 	if($('#name').val() != '') {
 		$('#nameButton').prop('disabled', false);
 		$('#nameButton').prop('enabled', true);
 		if(clicked == true) {
-			buildInterface();
+			setCookie('name', $('#name').val(), '30');
+			checkCookie();
 		}
 	} else {
 		$('#nameButton').prop('disabled', true);
 	}
 }
 
+// Add items to cookie
 function setCookie(cName, cValue, exDays) {
     var d = new Date();
     d.setTime(d.getTime() + (exDays*24*60*60*1000));
@@ -165,6 +177,7 @@ function setCookie(cName, cValue, exDays) {
     document.cookie = cName + '=' + cValue + '; ' + expires;
 }
 
+// Retreive items from cookie
 function getCookie(cname) {
     var name = cname + '=';
     var ca = document.cookie.split(';');
@@ -180,11 +193,15 @@ function getCookie(cname) {
     return '';
 }
 
+// Check if user already has cookie
 function checkCookie() {
     var name=getCookie('name');
     if (name != '') {
+    	// If they have a cookie with a name
         $('#name').val(name);
         buildInterface();
+        // Request the rest of the user data
+        socket.emit('requestUserInfo', name);
     } else {
        // Disable name button on startup
 		validateName();
