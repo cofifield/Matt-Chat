@@ -54,7 +54,20 @@ io.on('connection', function(socket){
 
     	var temp = time.split(' ');
     	var tempTime = temp[4].split(':');
-    	var timeStamp = temp[1] + " " + temp[2] + " ";
+    	var timeStamp = temp[1] + " ";
+
+      // Add ending to day
+      if(temp[2] == 1 || temp[2] == 21 || temp[2] == 31) {
+        temp[2] += 'st ';
+      } else if(temp[2] == 2 || temp[2] == 22) {
+        temp[2] += 'nd ';
+      } else if(temp[2] == 3 || temp[2] == 23) {
+        temp[2] += 'rd ';
+      } else {
+        temp[2] += 'th ';
+      }
+
+      timeStamp += temp[2];
 
     	// Format date string to our liking
     	if(parseInt(tempTime[0]) == 0) {
@@ -66,7 +79,9 @@ io.on('connection', function(socket){
     	} else if (parseInt(tempTime[0]) > 12) {
     		tempTime[0] = (parseInt(tempTime[0]) - 12);
     		timeStamp += tempTime[0] + ":" + tempTime[1] + "PM";
-    	}
+    	} else if (parseInt(tempTime[0]) < 12) {
+        timeStamp += tempTime[0] + ":" + tempTime[1] + "AM";
+      }
 
     	if(user !='') {
 	    	// Append new message
@@ -76,6 +91,10 @@ io.on('connection', function(socket){
 	    	fs.writeFile(msgFile, JSON.stringify(messageJSON), function (err) {
 				if (err) return Log('ERROR', err);
 			});
+
+        console.log(timeStamp);
+        // Reload JSON
+        reloadMessages();
 
 	    	// Send message
 	    	io.emit('sendMessage', user, msg, grp, timeStamp);
