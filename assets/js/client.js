@@ -1,15 +1,12 @@
 // Open connection to server
 var socket = io();
 
-// Disable name button on startup
-validateName();
-
-// Load Name Modal
-$('#nameModal').modal('toggle');
+checkCookie();
 
 // Build Interface
 function buildInterface() {
 	if($('#name').val() != '') {
+		setCookie('name', $('#name').val(), '30');
 		loadGroups();
 		loadMessages();
 	} else {
@@ -159,4 +156,39 @@ function validateName(clicked) {
 	} else {
 		$('#nameButton').prop('disabled', true);
 	}
+}
+
+function setCookie(cName, cValue, exDays) {
+    var d = new Date();
+    d.setTime(d.getTime() + (exDays*24*60*60*1000));
+    var expires = 'expires='+ d.toUTCString();
+    document.cookie = cName + '=' + cValue + '; ' + expires;
+}
+
+function getCookie(cname) {
+    var name = cname + '=';
+    var ca = document.cookie.split(';');
+    for(var i = 0; i <ca.length; i++) {
+        var c = ca[i];
+        while (c.charAt(0)==' ') {
+            c = c.substring(1);
+        }
+        if (c.indexOf(name) == 0) {
+            return c.substring(name.length,c.length);
+        }
+    }
+    return '';
+}
+
+function checkCookie() {
+    var name=getCookie('name');
+    if (name != '') {
+        $('#name').val(name);
+        buildInterface();
+    } else {
+       // Disable name button on startup
+		validateName();
+		// Load Name Modal
+		$('#nameModal').modal('toggle');
+    }
 }
