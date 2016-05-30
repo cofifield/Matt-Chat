@@ -8,6 +8,7 @@ function buildInterface() {
 	if($('#name').val() != '') {
 		loadGroups();
 		loadMessages();
+		updateOnlineStatus();
 	} else {
 		console.log('Hey! You need a name before you can build the interface!');
 	}
@@ -22,12 +23,16 @@ function loadMessages() {
 }
 
 // Load messages from server
-socket.on('loadMessages', function(users, messages, availGroups, groups, times, user){
+socket.on('loadMessages', function(users, images, messages, availGroups, groups, times, user){
 	if(user == $('#name').val()) {
 		for(var x=0; x < messages.length; x++) {
 			for(var y=0; y < availGroups.length; y ++) {
 				if(groups[x] == availGroups[y]) {
-					$('#chats-' + groups[x]).append('<img class="media-object img-circle pull-left" src="http://placehold.it/45X45" />');
+					for(var z=0; z < images.length; z++) {
+						var userImg = images[z].split('*');
+						if(users[x] == userImg[0])
+							$('#chats-' + groups[x]).append('<img class="media-object img-circle pull-left" src="' + userImg[1] + '" />');
+					}
 					$('#chats-' + groups[x]).append('<h5>' + messages[x] + '</h5>');
 					$('#chats-' + groups[x]).append('<small class="text-muted">' + users[x] + ' | ' + times[x] + '</small><hr>');
 				}
@@ -82,10 +87,13 @@ socket.on('loadGroups', function(groups, user){
 			chatBox += '<div style="display:none;" id="chatBox-' + temp[0] + '" class="col-md-8">';
 	    	chatBox += '<div class="panel panel-info">';
 	        chatBox += '<div class="panel-heading">';
-	        chatBox += temp[0];
+	        chatBox += temp[0] + ' - ';
+	        for(var y=0; y < members.length; y++) {
+            	chatBox += members[y] + ' ';
+            }
 	        chatBox += '<button type="button" class="close" onClick="closeChat(\'' + temp[0] + '\')">&times;</button>';
 	        chatBox += '</div>';
-	        chatBox += '<div class="panel-body">';
+	        chatBox += '<div class="panel-body chatBox">';
 			chatBox += '<ul class="media-list">';
 	 		chatBox += '<li class="media">';
 			chatBox += '<div class="media-body">';
@@ -118,8 +126,8 @@ socket.on('loadGroups', function(groups, user){
 
 
 // Recieve messages
-socket.on('sendMessage', function(user, msg, group, time){
-	$('#chats-' + group).append('<img class="media-object img-circle pull-left" src="http://placehold.it/45X45" />');
+socket.on('sendMessage', function(user, img, msg, group, time){
+	$('#chats-' + group).append('<img class="media-object img-circle pull-left" src="' + img + '" />');
 	$('#chats-' + group).append('<h5>' + msg + '</h5>');
 	$('#chats-' + group).append('<small class="text-muted">' + user + ' | ' + time + '</small><hr>');
 });
@@ -130,6 +138,25 @@ socket.on('requestUserInfo', function(online, img){
 	setCookie('usrImage', img, '30');
 	$('#cookie').html(getCookie('name') + ' ' + getCookie('online') + ' ' + getCookie('usrImage'));
 });
+
+// Recieve Online Status
+socket.on('updateOnlineStatus', function(online, img){
+	setCookie('online', online, '30');
+	setCookie('usrImage', img, '30');
+	$('#cookie').html(getCookie('name') + ' ' + getCookie('online') + ' ' + getCookie('usrImage'));
+});
+
+
+function updateOnlineStatus() {
+	socket.emit('updateOnlineStatus');
+}
+
+function logOut() {
+	setCookie('online', '0', '0');
+	setCookie('usrImage', '', '0');
+	setCookie('name', '', '0');
+	$(location).attr('href', 'http://192.168.1.238:6288');
+}
 
 // Check if enter is pressed while in the message text field
 function getChar(event, group) {
@@ -199,6 +226,7 @@ function checkCookie() {
     if (name != '') {
     	// If they have a cookie with a name
         $('#name').val(name);
+        $('#username').html(name + ' <span class="caret"></span>');
         buildInterface();
         // Request the rest of the user data
         socket.emit('requestUserInfo', name);

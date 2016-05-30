@@ -1,4 +1,9 @@
-var app = require('express')();
+var express = require('express');
+var app = express();
+
+// Define Static path for User images
+app.use('/img', express.static(__dirname + '/assets/img'));
+
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
 
@@ -8,14 +13,16 @@ var color = require('colors');
 // Used For loading and saving JSON
 var fs = require('fs');
 
+var logFile = './logs/server.log';
+
 var msgFile = './assets/json/messages.json';
-var messageJSON = "";
+var messageJSON = '';
 
 var groupsFile = './assets/json/groups.json';
-var groupsJSON = "";
+var groupsJSON = '';
 
 var usersFile = './assets/json/users.json';
-var usersJSON = "";
+var usersJSON = '';
 
 fs.readFile(msgFile, 'utf8', function (err, data) {
     if (err) throw err;
@@ -47,7 +54,7 @@ app.get('/assets/client', function(req, res){
 	res.sendFile(__dirname + '/assets/js/client.js');
 });
 
-io.on('connection', function(socket){
+io.on('connection', function(socket) {
 	// User connected
   	Log('SERVER', 'A user has connected');
 
@@ -57,12 +64,12 @@ io.on('connection', function(socket){
   	});
 
   	// Handle incoming chat messages
-  	socket.on('sendMessage', function(user, msg, grp, time){
-    	Log('MESSAGE', '[' + grp.cyan + '] <' + user.green + '> ' + msg);
+  	socket.on('sendMessage', function(user, msg, grp, time) {
+      Log('MESSAGE', '[' + grp.cyan + '] <' + user.green + '> ' + msg);
 
     	var temp = time.split(' ');
     	var tempTime = temp[4].split(':');
-    	var timeStamp = temp[1] + " ";
+    	var timeStamp = temp[1] + ' ';
 
       // Add ending to day
       if(temp[2] == 1 || temp[2] == 21 || temp[2] == 31) {
@@ -80,59 +87,73 @@ io.on('connection', function(socket){
     	// Format date string to our liking
     	if(parseInt(tempTime[0]) == 0) {
     		tempTime[0] = 12;
-    		timeStamp += tempTime[0] + ":" + tempTime[1] + "AM";
+    		timeStamp += tempTime[0] + ':' + tempTime[1] + 'AM';
     	} else if (parseInt(tempTime[0]) == 12) {
     		tempTime[0] = 12;
-    		timeStamp += tempTime[0] + ":" + tempTime[1] + "PM";
+    		timeStamp += tempTime[0] + ':' + tempTime[1] + 'PM';
     	} else if (parseInt(tempTime[0]) > 12) {
     		tempTime[0] = (parseInt(tempTime[0]) - 12);
-    		timeStamp += tempTime[0] + ":" + tempTime[1] + "PM";
+    		timeStamp += tempTime[0] + ':' + tempTime[1] + 'PM';
     	} else if (parseInt(tempTime[0]) < 12) {
-        timeStamp += tempTime[0] + ":" + tempTime[1] + "AM";
+        timeStamp += tempTime[0] + ':' + tempTime[1] + 'AM';
       }
 
-    	if(user !='') {
-	    	// Append new message
-	    	messageJSON.messages.push({name:user, message:msg, group:grp, timeStamp:timeStamp});
+      // Append new message
+      messageJSON.messages.push({name:user, message:msg, group:grp, timeStamp:timeStamp});
 
-	    	// Write messages to JSON file
-	    	fs.writeFile(msgFile, JSON.stringify(messageJSON), function (err) {
-				  if (err) return Log('ERROR', err);
-			  });
+      // Write messages to JSON file
+      fs.writeFile(msgFile, JSON.stringify(messageJSON), function (err) {
+  			if (err) return Log('ERROR', err);
+  		});
 
-        console.log(timeStamp);
-        // Reload JSON
-        reloadMessages();
+      // Reload message JSON
+      reloadMessages();
 
-	    	// Send message
-	    	io.emit('sendMessage', user, msg, grp, timeStamp);
-    	}
-  	});
+      reloadUsers();
+      var img = '';
+      for(var x=0; x < usersJSON.users.length; x++) {
+        if(usersJSON.users[x].name == user) {
+            img = usersJSON.users[x].img;
+        }
+      }
+
+  	  // Send message
+  	  io.emit('sendMessage', user, img, msg, grp, timeStamp);
+    });
 
 
 
   	// Handle laoding chat messages
   	socket.on('loadMessages', function(user){
+      reloadUsers();
   		reloadMessages();
+      reloadUsers();
+
       // Create array of messages
   		var users = [];
+      var images = [];
     	var messages = [];
-      	var groups = [];
-      	var times = [];
-      	var availGroups = [];
+      var groups = [];
+      var times = [];
+      var availGroups = [];
+
     	for(var x=0; x < messageJSON.messages.length; x++) {
     		users.push(messageJSON.messages[x].name);
     		messages.push(messageJSON.messages[x].message);
-        	groups.push(messageJSON.messages[x].group);
-        	times.push(messageJSON.messages[x].timeStamp);
+        groups.push(messageJSON.messages[x].group);
+        times.push(messageJSON.messages[x].timeStamp);
     	}
 
     	for(var x=0; x < groupsJSON.groups.length; x++) {
     		availGroups.push(groupsJSON.groups[x].name)
     	}
 
+      for(var x=0; x < usersJSON.users.length; x++) {
+        images.push(usersJSON.users[x].name + '*' + usersJSON.users[x].img)
+      }
+
     	// Send messages back to client
-    	io.emit('loadMessages', users, messages, availGroups, groups, times, user);
+    	io.emit('loadMessages', users, images, messages, availGroups, groups, times, user);
 
     	Log('SERVER', '<' + user.green + '> loaded messages from the server')
   	});
@@ -154,6 +175,7 @@ io.on('connection', function(socket){
       // Create new user if they don't exist
       if(!found) {
         usersJSON.users.push({name:user, online:'1', img:'http://placehold.it/45X45'})
+        Log('SERVER', 'Created new user <' + user.green + '>')
       }
 
       // Write to JSON file
@@ -183,6 +205,18 @@ io.on('connection', function(socket){
 
     	Log('SERVER', '<' + user.green + '> loaded groups from the server')
   	});
+
+    // Update online status
+    socket.on('updateOnlineStatus', function(){
+      reloadUsers();
+      var users = [];
+      var online = [];
+      for(var x=0; x < usersJSON.users.length; x++) {
+        users.push(usersJSON.users[x].name);
+        online.push(usersJSON.users[x].online);
+      }
+      io.emit('updateOnlineStatus', users, online);
+    }
 });
 
 
@@ -194,32 +228,46 @@ http.listen(6288, function(){
 
 function reloadMessages() {
   fs.readFile(msgFile, 'utf8', function (err, data) {
-      if (err) throw err;
+      if (err) return Log('ERROR', err);
       messageJSON = JSON.parse(data);
   });
 }
 
 function reloadGroups() {
 	fs.readFile(groupsFile, 'utf8', function (err, data) {
-      if (err) throw err;
+      if (err) return Log('ERROR', err);
     groupsJSON = JSON.parse(data);
   });
 }
 
 function reloadUsers() {
   fs.readFile(usersFile, 'utf8', function (err, data) {
-      if (err) throw err;
+      if (err) return Log('ERROR', err);
     usersJSON = JSON.parse(data);
   });
 }
 
 function Log(type, msg) {
-	if(type == 'SERVER')
-		console.log('[SERVER]: '.bold.gray + msg);
-	
-	if(type == 'MESSAGE')
-		console.log('[MESSAGE]: '.bold.cyan + msg);
 
-	if(type == 'ERROR')
+  // var logStream = '';
+
+	if(type == 'SERVER') {
+    // logStream += '[SERVER]: ' + msg;
+		console.log('[SERVER]: '.bold.gray + msg);
+  }
+	
+	if(type == 'MESSAGE') {
+    // logStream += '[MESSAGE]: ' + msg;
+		console.log('[MESSAGE]: '.bold.cyan + msg);
+  }
+
+	if(type == 'ERROR') {
+    // logStream += '[ERROR]: ' + msg;
 		console.log('[ERROR]: '.bold.red + msg);
+  }
+
+  // // Write to log file
+  //   fs.appendFile(logFile, logStream + "\n", function (err) {
+  //       if (err) throw err;
+  //   });
 }
