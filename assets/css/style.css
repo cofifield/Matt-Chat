@@ -1,3 +1,30 @@
+/* Page Formatting */
+.release {
+  color: #9900aa;
+}
+.mattchat {
+  color: #fff;
+}
+a#username.dropdown-toggle {
+  color: #ddd;
+}
+body {
+  background-color: #006937;
+  background-image: url('/img/MattChatBG-01.png');
+  background-size: 100% auto;
+  background-repeat: no-repeat;
+  background-position: top right;
+
+}
+/* Reformat bootstrap */
+.panel-heading {
+  background-color: #289cff;
+}
+
+.navbar-default {
+  background-color: #006937;
+  border-color: #006937;
+}
 /* Online Statues */
 /* ###################################################################################*/
 .online-group {
@@ -38,6 +65,7 @@
   display: block;
   float: left;
   margin-right: 5px;
+  margin-left: 5px;
   margin-top: 5px;
   background: gray;
   border-radius: 50%;
@@ -121,15 +149,18 @@
 .card .card-action {
   border-top: 1px solid rgba(160, 160, 160, 0.2);
   padding: 16px;
+  padding-top: 5px;
+  padding-bottom: 5px;
   background-color: #eee;
 }
 .card .card-action a {
-  color: #ffab40;
+  color: #00aabb;
   margin-right: 16px;
   transition: color 0.3s ease;
   text-transform: uppercase;
 }
 .card .card-action a:hover {
-  color: #ffd8a6;
+  color: #00aaff;
   text-decoration: none;
 }
+

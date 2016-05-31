@@ -61,11 +61,11 @@ socket.on('loadGroups', function(groups, user){
 			var temp = groups[x].split('*');
 			var members = temp[1].split('/');
 
-          	card += '<div class="col-md-6">';
+          	card += '<div class="col-md-4">';
 			card += '<div class="card">';
 			card += '<span class="card-title">' + temp[0] + '</span>';
             card += '<div class="card-image">';
-            card += '<img class="img-responsive" src="http://placehold.it/300X200">'
+            card += '<img class="img-responsive" src="http://placehold.it/200X150">'
             card += '</div>';
 			card += '<div class="card-content">';
             card += '<p id="' + temp[0] + '-grpmem">';
