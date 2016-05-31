@@ -33,8 +33,7 @@ socket.on('loadMessages', function(users, images, messages, availGroups, groups,
 						if(users[x] == userImg[0])
 							$('#chats-' + groups[x]).append('<img class="media-object img-circle pull-left" src="' + userImg[1] + '" />');
 					}
-					$('#chats-' + groups[x]).append('<h5>' + messages[x] + '</h5>');
-					$('#chats-' + groups[x]).append('<small class="text-muted">' + users[x] + ' | ' + times[x] + '</small><hr>');
+					$('#chats-' + groups[x]).append('<div class="msg"><h5>' + messages[x] + '</h5> <small class="text-muted">' + users[x] + ' | ' + times[x] + '</small></div><hr>');
 				}
 			}
 		}
@@ -69,11 +68,7 @@ socket.on('loadGroups', function(groups, user){
             card += '<img class="img-responsive" src="http://placehold.it/300X200">'
             card += '</div>';
 			card += '<div class="card-content">';
-            card += '<p>';
-
-            for(var y=0; y < members.length; y++) {
-            	card += members[y] + ' ';
-            }
+            card += '<p id="' + temp[0] + '-grpmem">';
 
             card += '</p>';      
             card += '</div>';     
@@ -86,14 +81,10 @@ socket.on('loadGroups', function(groups, user){
   			// Build Chat Boxes
 			chatBox += '<div style="display:none;" id="chatBox-' + temp[0] + '" class="col-md-8">';
 	    	chatBox += '<div class="panel panel-info">';
-	        chatBox += '<div class="panel-heading">';
-	        chatBox += temp[0] + ' - ';
-	        for(var y=0; y < members.length; y++) {
-            	chatBox += members[y] + ' ';
-            }
+	        chatBox += '<div class="panel-heading" id="' + temp[0] + '-chatmem">';
 	        chatBox += '<button type="button" class="close" onClick="closeChat(\'' + temp[0] + '\')">&times;</button>';
 	        chatBox += '</div>';
-	        chatBox += '<div class="panel-body chatBox">';
+	        chatBox += '<div id="' + temp[0] + '-scr" class="panel-body chatBox">';
 			chatBox += '<ul class="media-list">';
 	 		chatBox += '<li class="media">';
 			chatBox += '<div class="media-body">';
@@ -120,7 +111,13 @@ socket.on('loadGroups', function(groups, user){
 		// Add built content
 		$('#groups').append(card);
 		$('#chats').append(chatBox);
+		openChat('group1');
 
+		// Scroll to bottom of boxes
+		for(var x=0; x < groups.length; x++) { 
+			var temp = groups[x].split('*');
+			$('#' + temp[0] + '-scr').scrollTop($('#' + temp[0] + '-scr')[0].scrollHeight);
+		}
 	}
 });
 
@@ -128,8 +125,8 @@ socket.on('loadGroups', function(groups, user){
 // Recieve messages
 socket.on('sendMessage', function(user, img, msg, group, time){
 	$('#chats-' + group).append('<img class="media-object img-circle pull-left" src="' + img + '" />');
-	$('#chats-' + group).append('<h5>' + msg + '</h5>');
-	$('#chats-' + group).append('<small class="text-muted">' + user + ' | ' + time + '</small><hr>');
+	$('#chats-' + group).append('<div class="msg"><h5>' + msg + '</h5> <small class="text-muted">' + user + ' | ' + time + '</small></div><hr>');
+	$('#' + group + '-scr').scrollTop($('#' + group + '-scr')[0].scrollHeight);
 });
 
 // Recieve User info
@@ -140,10 +137,38 @@ socket.on('requestUserInfo', function(online, img){
 });
 
 // Recieve Online Status
-socket.on('updateOnlineStatus', function(online, img){
-	setCookie('online', online, '30');
-	setCookie('usrImage', img, '30');
-	$('#cookie').html(getCookie('name') + ' ' + getCookie('online') + ' ' + getCookie('usrImage'));
+socket.on('updateOnlineStatus', function(users, online, groups) {
+	console.log(online[0]);
+	console.log(online[1]);
+	for(var x=0; x < groups.length; x++) {
+		var temp = groups[x].split('*');
+		var members = temp[1].split('/');
+
+		// Clear HTML to prevent online status build up
+		$('#' + temp[0] + '-grpmem').html('');
+		$('#' + temp[0] + '-chatmem').html('<span>&nbsp;</span>');
+		$('#' + temp[0] + '-chatmem').append('<span style="float: left;">' + temp[0] + ' | </span>');
+
+		for(var y=0; y < members.length; y++) {
+            for(var z=0; z < online.length; z ++) {
+            	if(members[y] == users[z]) {
+            		if(online[z] == 1) {
+            			$('#' + temp[0] + '-grpmem').append('<div style="margin-bottom: 5px;"><span class="online-group"></span>' + users[z] + '</div>');
+            			$('#' + temp[0] + '-chatmem').append('<span style="float: left;"><span class="online-chat"></span>' + users[z] + ' | </span> ');
+            		} else {
+            			$('#' + temp[0] + '-grpmem').append('<div style="margin-bottom: 5px;"><span class="offline-group"></span>' + users[z] + '</div>');
+            			$('#' + temp[0] + '-chatmem').append('<span style="float: left;"><span class="offline-chat"></span>' + users[z] + ' | </span> ');
+            		}
+            	}
+            }
+        }
+        // Add Close Button
+    	$('#' + temp[0] + '-chatmem').append('<button type="button" class="close" onClick="closeChat(\'' + temp[0] + '\')">&times;</button>');
+	}
+});
+
+socket.on('userDisconnected', function(user) {
+	socket.emit('userDisconnected', user);
 });
 
 
@@ -155,6 +180,7 @@ function logOut() {
 	setCookie('online', '0', '0');
 	setCookie('usrImage', '', '0');
 	setCookie('name', '', '0');
+	$('#name').val('');
 	$(location).attr('href', 'http://192.168.1.238:6288');
 }
 
@@ -205,8 +231,8 @@ function setCookie(cName, cValue, exDays) {
 }
 
 // Retreive items from cookie
-function getCookie(cname) {
-    var name = cname + '=';
+function getCookie(cName) {
+    var name = cName + '=';
     var ca = document.cookie.split(';');
     for(var i = 0; i <ca.length; i++) {
         var c = ca[i];

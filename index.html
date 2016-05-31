@@ -20,9 +20,6 @@
         </div>
         <div id="navbar" class="navbar-collapse collapse">
           <ul class="nav navbar-nav">
-            <li class="active"><a href="#">Home</a></li>
-            <li><a href="#about">About</a></li>
-            <li><a href="#contact">Contact</a></li>
           </ul>
           <ul class="nav navbar-nav navbar-right">
             <li class="dropdown">
@@ -32,6 +29,7 @@
                 <li><a href="#">Profile</a></li>
                 <li role="separator" class="divider"></li>
                 <li><a onClick="logOut()" href="#">Log Out</a></li>
+                <li><a onClick="updateOnlineStatus()" href="#">Reload</a></li>
                 <li id="cookie"></li>
               </ul>
             </li>
@@ -41,7 +39,6 @@
     </nav>
 
     <div class="fluid-container">
-      <div class="row">
         <!-- Left -->
         <div id="groups" class="col-md-4">
         </div>
@@ -49,7 +46,6 @@
         <!-- Right -->
         <div id="chats" class="col-md-8">
         </div>
-      </div>
     </div>
 
     <!-- Enter Name Modal -->
