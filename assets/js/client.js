@@ -111,13 +111,6 @@ socket.on('loadGroups', function(groups, user){
 		// Add built content
 		$('#groups').append(card);
 		$('#chats').append(chatBox);
-		openChat('group1');
-
-		// Scroll to bottom of boxes
-		for(var x=0; x < groups.length; x++) { 
-			var temp = groups[x].split('*');
-			$('#' + temp[0] + '-scr').scrollTop($('#' + temp[0] + '-scr')[0].scrollHeight);
-		}
 	}
 });
 
@@ -138,8 +131,6 @@ socket.on('requestUserInfo', function(online, img){
 
 // Recieve Online Status
 socket.on('updateOnlineStatus', function(users, online, groups) {
-	console.log(online[0]);
-	console.log(online[1]);
 	for(var x=0; x < groups.length; x++) {
 		var temp = groups[x].split('*');
 		var members = temp[1].split('/');
